@@ -54,12 +54,11 @@ function onHttpStart() {
   console.log("Express http server listening on: " + HTTP_PORT);
 }
 
-//For adding cookies to the web application
 app.use(clientSessions({
-    cookieName      : "sessions",
-    secret          : "assignment6_Web322",
-    duration        : 10 * 60 * 100,
-    activeDuration  : 1000*60
+    cookieName: "session", // this is the object name that will be added to 'req'
+    secret: "Assignment6_web322", // this should be a long un-guessable string.
+    duration: 5 * 60 * 1000, // duration of the session in milliseconds (5 minutes)
+    activeDuration: 1000 * 60 // the session will be extended by this many ms each request (1 minute)
 }));
 
 // Register handlebars as the rendering engine for views
@@ -152,12 +151,12 @@ app.post("/login", function(req,res){
     }
     
     
-    registration.findOne({username: userdata.user}, ["fName", "lName", "username", "password"]).exec().then((data) => {
+    userInfo.findOne({username: userdata.user}, ["fName", "lName", "username", "password"]).exec().then((data) => {
         bcryptjs.compare(userdata.pass, data.password).then((result) => {
-            console.log("True!");
+            console.log(result);
             if (result){
-                if(data.id = "63815d4ca97e8e85fb46dc8e"){
-                    req.clientSessions.adminData = {
+                if(data.id = ""){
+                    req.sessions.adminData = {
                         username: userdata.user,
                         password: userdata.pass
                     }
@@ -166,7 +165,7 @@ app.post("/login", function(req,res){
                     return;
                 }
                 else {
-                    req.clientSessions.userdata = {
+                    req.sessions.userdata = {
                         username: userdata.user,
                         password: userdata.pass
                     }
@@ -179,14 +178,24 @@ app.post("/login", function(req,res){
 
 });
 
-//This is a function to ensure the login!!
+//Router function to logout from a session!
+app.get("/logout", function(req,res){
+    console.log("Logging Out...");
+    req.sessions.reset();
+    res.redirect("/login");
+});
+
+// This is a helper middleware function that checks if a user is logged in
+// we can use it in any route that we want to protect against unauthenticated access.
+// A more advanced version of this would include checks for authorization as well after
+// checking if the user is authenticated
 function ensureLogin(req, res, next) {
-    if(!req.clientSessions.adminData) {
-        res.redirect("/login");
+    if (!req.session.user) {
+      res.redirect("/login");
     } else {
-        next();
+      next();
     }
-};
+  }
 
 //Router function for 'registration' page
 app.get("/registration", function(req,res){
@@ -233,43 +242,32 @@ app.post("/registration", function(req,res){
         return;
     }
 
-    else if (!userdata.postaltest) {
+     if (!userdata.postaltest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-    else if (!userdata.passwordtest) {
+     if (!userdata.passwordtest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-    else if (!userdata.checkpassword) {
+     if (!userdata.checkpassword) {
         res.render("registration", { data: userdata, layout: false });
         return;
-    }
-
-    var userName = "";
-    for(var index = 0; index < userdata.email.length; index++){
-        const segment = userdata.email[index];
-        if(segment != "@"){
-            userName = userName + segment;
-        }
-        if(segment == "@"){
-            break;
-        }
     }
 
     //This is to hash the password using a salt whcih was generated using 15 times/rounds
     //To store the resulting hash value in the database
-    bcryptjs.hash(userdata.password, 15).then(hash => {
+    bcryptjs.hash(userdata.password, 10).then(hash => {
 
         let accinfo = new userInfo({
             fName: userdata.fName,
             lName: userdata.lName,
-            username: userdata.username,
+            username: username,
             email:userdata.email,
             Address: userdata.Address,
             postalCode: userdata.postalCode,
             country: userdata.country,
-            password: userdata.password
+            password: hash
         }).save((e,data)=>{
             if(e){
                 console.log(e);
@@ -286,13 +284,6 @@ app.post("/registration", function(req,res){
 //Router function for page not found
 app.get("/error", function(req,res){
     res.sendFile(path.join(__dirname, "/error.html"));
-});
-
-//Router function to logout from a session!
-app.get("/logout", function(req,res){
-    console.log("Logging Out...");
-    req.clientSessions.reset();
-    res.redirect("/login");
 });
 
 //Router to using images in .html giles
