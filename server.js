@@ -8,6 +8,8 @@ const handlebars = require("express-handlebars");
 const mongoose = require("mongoose");
 const clientSessions = require("client-sessions");
 const bcryptjs = require("bcryptjs");
+const { log } = require("util");
+const { read } = require("fs");
 
 
 
@@ -150,12 +152,11 @@ app.post("/login", function(req,res){
         return;
     }
     
-    
     userInfo.findOne({username: userdata.user}, ["fName", "lName", "username", "password"]).exec().then((data) => {
         bcryptjs.compare(userdata.pass, data.password).then((result) => {
             console.log(result);
             if (result){
-                if(data.id = ""){
+                if(data.id = "63965055f783fc8d7f8883c2"){
                     req.sessions.adminData = {
                         username: userdata.user,
                         password: userdata.pass
@@ -242,17 +243,28 @@ app.post("/registration", function(req,res){
         return;
     }
 
-     if (!userdata.postaltest) {
+     else if (!userdata.postaltest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-     if (!userdata.passwordtest) {
+     else if (!userdata.passwordtest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-     if (!userdata.checkpassword) {
+     else if (!userdata.checkpassword) {
         res.render("registration", { data: userdata, layout: false });
         return;
+    }
+
+    var username = "";
+    for (let index = 0; index < userdata.email.length; index++) {
+        const element = userdata.email[index];
+        if (element != '@') {
+            username += element
+        }
+        if (element == '@') {
+            break;
+        }
     }
 
     //This is to hash the password using a salt whcih was generated using 15 times/rounds
@@ -276,7 +288,7 @@ app.post("/registration", function(req,res){
             }
         }); 
         console.log(hash);
-    })
+    });
 
     res.render("dashboard", {layout:false});
 });
