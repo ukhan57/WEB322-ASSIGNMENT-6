@@ -1,0 +1,95 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>Web322 Assignment 6</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="/web_logo.png" />
+    <!-- Bootstrap icons-->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <section class="vh-100 gradient-custom">
+      <div class="container py-5 h-100">
+        <div class="row d-flex justify-content-center align-items-center h-100">
+          <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+            <div class="card bg-dark text-white" style="border-radius: 1rem">
+              <div class="card-body p-5 text-center">
+                <div class="mb-md-5 mt-md-4 pb-5">
+                  <h2 class="fw-bold mb-2 text-uppercase">Login</h2>
+                  <p class="text-white-50 mb-5">
+                    Please enter your username and password!
+                  </p>
+                  <form
+                    name="myForm"
+                    action="/login"
+                    enctype="application/x-www-form-urlencoded"
+                    method="post"
+                  >
+                    <div class="form-outline form-white mb-4">
+                      <div class="row text-center">
+                        <div class="p-3 col-sm-12 col-md-12">
+                          <label for="email" class="form-label"
+                            >Username:
+                          </label>
+                          <input
+                            type="text"
+                            name="username"
+                            id="username"
+                            placeholder="username"
+                            value=""
+                            autofocus=""
+                          />
+                        </div>
+                        <div class="p-3 col-sm-12 col-md-12">
+                          <label for="password" class="form-label"
+                            >Password:
+                          </label>
+                          <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            placeholder="password"
+                            value=""
+                            autofocus=""
+                          />
+                        </div>
+                        <div>
+                          <button type="submit" class="btn btn-primary">
+                            Log In
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+
+                  <a href="/" class="btn btn-primary btn-lg">
+                    <span class="glyphicon glyphicon-arrow-left"></span>
+                    Back Home
+                  </a>
+                </div>
+
+                <div>
+                  <p class="mb-0">
+                    Don't have an account?
+                    <a href="/registration" class="text-white-50 fw-bold"
+                      >Sign Up</a
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
