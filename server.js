@@ -7,7 +7,7 @@ const bodyParser = require("body-parser");
 const handlebars = require("express-handlebars");
 const mongoose = require("mongoose");
 const clientSessions = require("client-sessions");
-const bcryptjs = require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const { log } = require("util");
 const { read } = require("fs");
 
@@ -27,14 +27,14 @@ const registrationSchema = new schema({
         "type": String,
         "unique": true
     },
-    "email": {
-        "type": String,
-        "unique": true,
-    },
+    "email": String,
     "Address": String,
     "postalCode": String,
     "country": String,
-    "password": String
+    "password": {
+        "type": String,
+        "unique": true
+    }
 });
 
 //Creating schemas for the database
@@ -88,13 +88,25 @@ app.get("/blog", function(req,res){
     });
 });
 
-app.get("/admin", function(req,res){
+// This is a helper middleware function that checks if a user is logged in
+// we can use it in any route that we want to protect against unauthenticated access.
+// A more advanced version of this would include checks for authorization as well after
+// checking if the user is authenticated
+function ensureLogin(req, res, next) {
+    if (!req.session.adminData) {
+      res.redirect("/login");
+    } else {
+      next();
+    }
+  };
+
+app.get("/admin", ensureLogin, function(req,res) {
     res.render("admin", {layout:false});
 });
 
-app.post("/admin", function(req,res){
+app.post("/admin", function(req,res) {
     console.log("req.body.img");
-    let articelData = new blogContent({
+    let articelData = new blogContent ({
         title: req.body.title,
         content: req.body.content,
         date: req.body.data,
@@ -115,7 +127,7 @@ app.post("/read_more", function(req,res){
     });
 });
 
-app.post("/update", (req, res) => {
+app.post("/update", ensureLogin,(req, res) => {
     blogContent.updateOne({
         _id: req.body.ids
     }, {
@@ -153,11 +165,11 @@ app.post("/login", function(req,res){
     }
     
     userInfo.findOne({username: userdata.user}, ["fName", "lName", "username", "password"]).exec().then((data) => {
-        bcryptjs.compare(userdata.pass, data.password).then((result) => {
+        bcrypt.compare(req.body.password, data.password).then((result) => {
             console.log(result);
-            if (result){
-                if(data.id = "63965055f783fc8d7f8883c2"){
-                    req.sessions.adminData = {
+            if (result) {
+                if(data._id = "63968f6c7c9b121dc024ecdc"){
+                    req.session.adminData = {
                         username: userdata.user,
                         password: userdata.pass
                     }
@@ -166,13 +178,16 @@ app.post("/login", function(req,res){
                     return;
                 }
                 else {
-                    req.sessions.userdata = {
+                    req.session.userdata = {
                         username: userdata.user,
                         password: userdata.pass
                     }
                     res.render("User_Dashboard", {fName: data.fName, lName: data.lName, username: data.username, layout: false});
                     return;
                 }
+            } else {
+                res.render("login", {error: "You have entered the wrong username and/or password, please try again!", layout:false});
+                return;
             }
         })
     });
@@ -182,21 +197,9 @@ app.post("/login", function(req,res){
 //Router function to logout from a session!
 app.get("/logout", function(req,res){
     console.log("Logging Out...");
-    req.sessions.reset();
+    req.session.reset();
     res.redirect("/login");
 });
-
-// This is a helper middleware function that checks if a user is logged in
-// we can use it in any route that we want to protect against unauthenticated access.
-// A more advanced version of this would include checks for authorization as well after
-// checking if the user is authenticated
-function ensureLogin(req, res, next) {
-    if (!req.session.user) {
-      res.redirect("/login");
-    } else {
-      next();
-    }
-  }
 
 //Router function for 'registration' page
 app.get("/registration", function(req,res){
@@ -242,16 +245,15 @@ app.post("/registration", function(req,res){
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-
-     else if (!userdata.postaltest) {
+    if (!userdata.postaltest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-     else if (!userdata.passwordtest) {
+    if (!userdata.passwordtest) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
-     else if (!userdata.checkpassword) {
+    if (!userdata.checkpassword) {
         res.render("registration", { data: userdata, layout: false });
         return;
     }
@@ -269,29 +271,31 @@ app.post("/registration", function(req,res){
 
     //This is to hash the password using a salt whcih was generated using 15 times/rounds
     //To store the resulting hash value in the database
-    bcryptjs.hash(userdata.password, 10).then(hash => {
+    bcrypt.hash(userdata.password, 10).then((hash) => {
 
-        let accinfo = new userInfo({
+        let user = new userInfo({
             fName: userdata.fName,
             lName: userdata.lName,
             username: username,
-            email:userdata.email,
+            email: userdata.email,
             Address: userdata.Address,
             postalCode: userdata.postalCode,
             country: userdata.country,
             password: hash
-        }).save((e,data)=>{
-            if(e){
-                console.log(e);
-            } else {
-                console.log(data);
-            }
-        }); 
+        });
+        user.save().then(()=>{
+            userInfo.findOne({username: data.username}).exec().then((u)=>{
+                req.session.user = {id: u._id};
+                res.json({success:true});
+            });
+        });
         console.log(hash);
-    });
-
-    res.render("dashboard", {layout:false});
+        }); 
+        
+        res.render("dashboard", {layout:false});
 });
+
+    
 
 //Router function for page not found
 app.get("/error", function(req,res){
